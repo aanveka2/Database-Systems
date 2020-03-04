@@ -139,14 +139,7 @@ c006
 c001                                                                            
 c006                                                                            
 c002                                                                            
-
-SQL> start query14.sql
-SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE TOTAL_PRICE IN (SELECT MAX(TOTAL_PRICE) FROM PURCHASES);
-
-CNAME                                                                           
----------------                                                                 
-Chris                                                                           
-
+                                                                    
 SQL> start query13.sql
 SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID JOIN PRODUCTS PROD ON PURC.PID=PROD.PID WHERE ABS(ROUND(((PROD.ORIGINAL_PRICE -PURC.TOTAL_PRICE)))) > 100;
 
@@ -155,14 +148,13 @@ CNAME
 Kathy                                                                           
 Chris                                                                           
 
-SQL> start query 14.sql
-SP2-0310: unable to open file "query.sql"
 SQL> start query14.sql
-SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE TOTAL_PRICE IN (SELECT MAX(TOTAL_PRICE) FROM PURCHASES);
+SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE TOTAL_PRICE >= (SELECT MAX(TOTAL_PRICE/QTY) FROM PURCHASES);
 
 CNAME                                                                           
 ---------------                                                                 
-Chris                                                                           
+Kathy                                                                           
+Chris                                                                         
 
 SQL> start query15.sql
 SQL> SELECT PROD.* FROM PRODUCTS PROD WHERE PID IN ( SELECT DISTINCT P1.PID FROM PURCHASES P1 JOIN PURCHASES P2 ON P1.PID=P2.PID AND P1.CID<>P2.CID );
