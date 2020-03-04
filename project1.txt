@@ -1,4 +1,3 @@
-SQL> 
 SQL> start query1.sql
 SQL> SELECT CNAME, TELEPHONE# FROM CUSTOMERS WHERE VISITS_MADE >= 3 AND SUBSTR(TELEPHONE#,0,3) = 666;
 
@@ -8,15 +7,13 @@ Kathy           666-555-4567
 Chris           666-555-6745                                                    
 
 SQL> start query2.sql
-SQL> SELECT CUST.CNAME, CUST.TELEPHONE# FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE PURC.TOTAL_PRICE >= 100 AND PTIME >= SYSDATE-25;
+SQL> SELECT CUST.CNAME, CUST.TELEPHONE#, PTIME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE PURC.TOTAL_PRICE >= 100 AND PTIME BETWEEN SYSDATE-25 AND
+  2  SYSDATE;
 
-CNAME           TELEPHONE#                                                      
---------------- ------------                                                    
-Kathy           666-555-4567                                                    
-Kathy           666-555-4567                                                    
-Chris           666-555-6745                                                    
-Mike            999-555-5674                                                    
-Joe             666-555-5746                                                    
+CNAME           TELEPHONE#   PTIME                                              
+--------------- ------------ ---------                                          
+Kathy           666-555-4567 20-FEB-20                                          
+Chris           666-555-6745 18-FEB-20                                          
 
 SQL> start query3.sql
 SQL> SELECT PROD.PID FROM PRODUCTS PROD JOIN PURCHASES PURC ON PROD.PID = PURC.PID JOIN EMPLOYEES EMP ON PURC.EID = EMP.EID AND ORIGINAL_PRICE * (1-discnt_rate) < 10 AND EMP.ENAME = 'Peter';
@@ -26,14 +23,27 @@ PID
 p005                                                                            
 
 SQL> start query4.sql
-SQL> SELECT PURC.* FROM PURCHASES PURC JOIN EMPLOYEES EMP ON PURC.EID = EMP.EID JOIN CUSTOMERS CUST ON PURC.CID = CUST.CID JOIN PRODUCTS PROD ON PURC.PID = PROD.PID AND SUBSTR(EMP.TELEPHONE#,0,3) = SUBSTR(CUST.TELEPHONE#,0,3) AND PNAME NOT IN ('TV');
+SQL> SELECT P.* FROM PURCHASES P WHERE P.EID IN (SELECT E.EID FROM EMPLOYEES E INNER JOIN CUSTOMERS C ON SUBSTR(E.TELEPHONE#,1,3)=SUBSTR(C.TELEPHONE#,1,3)) AND P.PID IN (SELECT PID FROM PRODUCTS WHERE (PRODUCTS.PNAME NOT LIKE 'TV'));
 
       PUR# EID PID  CID         QTY PTIME     TOTAL_PRICE                       
 ---------- --- ---- ---- ---------- --------- -----------                       
-    100009 e03 p001 c007          1 12-MAR-20        8.99                       
     100002 e01 p003 c001          1 20-FEB-20       118.4                       
-    100011 e02 p004 c006         10 16-MAR-20         9.9                       
+    100003 e02 p004 c002          5 08-MAR-20        4.95                       
     100004 e01 p005 c003          2 23-FEB-20       18.17                       
+    100005 e04 p007 c004          1 20-MAR-20       119.2                       
+    100006 e03 p008 c001          1 12-MAR-20       349.3                       
+    100007 e03 p006 c003          2 10-FEB-20       35.91                       
+    100008 e03 p006 c005          1 16-JAN-20       17.96                       
+    100009 e03 p001 c007          1 12-MAR-20        8.99                       
+    100011 e02 p004 c006         10 16-MAR-20         9.9                       
+    100012 e02 p008 c003          2 18-FEB-20       698.6                       
+    100013 e04 p006 c005          2 30-JAN-20       35.91                       
+
+      PUR# EID PID  CID         QTY PTIME     TOTAL_PRICE                       
+---------- --- ---- ---- ---------- --------- -----------                       
+    100014 e03 p009 c008          3 18-MAR-20      134.84                       
+
+12 rows selected.
 
 SQL> start query5.sql
 SQL> SELECT PUR#, to_char(PTIME, 'Mon DD, YYYY Day HH24:MI:SS') FROM PURCHASES ORDER BY PTIME ;
@@ -42,7 +52,7 @@ SQL> SELECT PUR#, to_char(PTIME, 'Mon DD, YYYY Day HH24:MI:SS') FROM PURCHASES O
 ---------- -------------------------------------------------------------------  
     100001 Jan 12, 2020 Sunday    10:34:30                                      
     100008 Jan 16, 2020 Thursday  12:22:15                                      
-    100010 Jan 19, 2020 Sunday    17:32:37                                      
+    100010 Jan 20, 2020 Monday    17:32:37                                      
     100013 Jan 30, 2020 Thursday  10:38:25                                      
     100007 Feb 10, 2020 Monday    17:12:20                                      
     100012 Feb 18, 2020 Tuesday   15:56:38                                      
@@ -87,40 +97,30 @@ c008 Joe
 7 rows selected.
 
 SQL> start query8.sql
-SQL> SELECT ENAME, EID FROM EMPLOYEES WHERE EID IN (SELECT EID FROM PURCHASES WHERE NOT EXISTS (SELECT * FROM PURCHASES WHERE TOTAL_PRICE IN (SELECT TOTAL_PRICE FROM
-  2  PURCHASES WHERE TOTAL_PRICE <= 200) AND TOTAL_PRICE >200 ));
+SQL> SELECT ENAME FROM EMPLOYEES WHERE NOT EXISTS (SELECT * FROM PURCHASES,PRODUCTS WHERE PURCHASES.PID=PRODUCTS.PID AND EMPLOYEES.EID=PURCHASES.EID AND PRODUCTS.ORIGINAL_PRICE>200);
 
-ENAME           EID                                                             
---------------- ---                                                             
-Peter           e01                                                             
-David           e02                                                             
-Susan           e03                                                             
-Anne            e04                                                             
+ENAME                                                                           
+---------------                                                                 
+Mike                                                                            
 
 SQL> start query9.sql
-SQL> SELECT PURC.CID FROM PURCHASES PURC JOIN PRODUCTS PROD ON PURC.PID=PROD.PID AND ORIGINAL_PRICE > 200;
+SQL> SELECT DISTINCT PURC.CID FROM PURCHASES PURC JOIN PRODUCTS PROD ON PURC.PID=PROD.PID AND ORIGINAL_PRICE > 200;
 
 CID                                                                             
 ----                                                                            
-c001                                                                            
 c006                                                                            
-c003                                                                            
 c001                                                                            
+c003                                                                            
 
 SQL> start query10.sql
-SQL> SELECT EMP.EID, EMP.ENAME FROM EMPLOYEES EMP JOIN PURCHASES PURC ON EMP.EID=PURC.EID WHERE CID IN (SELECT CID FROM PURCHASES GROUP BY CID HAVING
+SQL> SELECT DISTINCT EMP.EID, EMP.ENAME FROM EMPLOYEES EMP JOIN PURCHASES PURC ON EMP.EID=PURC.EID WHERE CID IN (SELECT CID FROM PURCHASES GROUP BY CID HAVING
   2  COUNT(*) >= 3);
 
 EID ENAME                                                                       
 --- ---------------                                                             
-e03 Susan                                                                       
 e01 Peter                                                                       
-e01 Peter                                                                       
-e03 Susan                                                                       
 e02 David                                                                       
-e01 Peter                                                                       
-
-6 rows selected.
+e03 Susan                                                                       
 
 SQL> start query11.sql
 SQL> SELECT P.* FROM PRODUCTS P, PURCHASES S WHERE S.CID = 'c001' AND P.PID = S.PID AND S.PID NOT IN(SELECT PID FROM PURCHASES WHERE CID = 'c006');
@@ -140,27 +140,23 @@ c001
 c006                                                                            
 c002                                                                            
 
-SQL> start query12.sql
-SQL> SELECT CID FROM PURCHASES WHERE PID IN (SELECT PID FROM PURCHASES WHERE CID IN ('c006'));
-
-CID                                                                             
-----                                                                            
-c006                                                                            
-c001                                                                            
-c006                                                                            
-c002                                                                            
-
-SQL> start query13.sql
-SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID JOIN PRODUCTS PROD ON PURC.PID=PROD.PID AND ORIGINAL_PRICE * (1-discnt_rate) > 100 GROUP
-  2  BY CNAME;
+SQL> start query14.sql
+SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE TOTAL_PRICE IN (SELECT MAX(TOTAL_PRICE) FROM PURCHASES);
 
 CNAME                                                                           
 ---------------                                                                 
-Connie                                                                          
 Chris                                                                           
-Kathy                                                                           
-Mike                                                                            
 
+SQL> start query13.sql
+SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID JOIN PRODUCTS PROD ON PURC.PID=PROD.PID WHERE ABS(ROUND(((PROD.ORIGINAL_PRICE -PURC.TOTAL_PRICE)))) > 100;
+
+CNAME                                                                           
+---------------                                                                 
+Kathy                                                                           
+Chris                                                                           
+
+SQL> start query 14.sql
+SP2-0310: unable to open file "query.sql"
 SQL> start query14.sql
 SQL> SELECT CNAME FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID WHERE TOTAL_PRICE IN (SELECT MAX(TOTAL_PRICE) FROM PURCHASES);
 
@@ -179,22 +175,27 @@ p006 lamp                    10             6          19.95          .1
 p008 computer                 5             3            499          .3        
 
 SQL> start query16.sql
-SQL> SELECT DISTINCT P1.PUR# FROM PURCHASES P1 JOIN (SELECT * FROM PURCHASES WHERE CID IN ('c006')) P2 ON 1=1 WHERE P1.TOTAL_PRICE >= P2.TOTAL_PRICE AND P1.CID <> 'c006';
+SQL> SELECT * FROM PURCHASES WHERE TOTAL_PRICE >= ANY (SELECT TOTAL_PRICE FROM PURCHASES WHERE TOTAL_PRICE IN (SELECT TOTAL_PRICE FROM PURCHASES WHERE CID='c006') AND CID='c006');
 
-      PUR#                                                                      
-----------                                                                      
-    100013                                                                      
-    100005                                                                      
-    100008                                                                      
-    100006                                                                      
-    100012                                                                      
-    100014                                                                      
-    100001                                                                      
-    100002                                                                      
-    100004                                                                      
-    100007                                                                      
+      PUR# EID PID  CID         QTY PTIME     TOTAL_PRICE                       
+---------- --- ---- ---- ---------- --------- -----------                       
+    100001 e01 p002 c001          1 12-JAN-20      211.65                       
+    100002 e01 p003 c001          1 20-FEB-20       118.4                       
+    100004 e01 p005 c003          2 23-FEB-20       18.17                       
+    100005 e04 p007 c004          1 20-MAR-20       119.2                       
+    100006 e03 p008 c001          1 12-MAR-20       349.3                       
+    100007 e03 p006 c003          2 10-FEB-20       35.91                       
+    100008 e03 p006 c005          1 16-JAN-20       17.96                       
+    100010 e04 p002 c006          1 20-JAN-20      211.65                       
+    100011 e02 p004 c006         10 16-MAR-20         9.9                       
+    100012 e02 p008 c003          2 18-FEB-20       698.6                       
+    100013 e04 p006 c005          2 30-JAN-20       35.91                       
 
-10 rows selected.
+      PUR# EID PID  CID         QTY PTIME     TOTAL_PRICE                       
+---------- --- ---- ---- ---------- --------- -----------                       
+    100014 e03 p009 c008          3 18-MAR-20      134.84                       
+
+12 rows selected.
 
 SQL> start query17.sql
 SQL> SELECT CUST.CID, CNAME, COUNT(DISTINCT PURC.PID) FROM CUSTOMERS CUST JOIN PURCHASES PURC ON CUST.CID=PURC.CID GROUP BY CUST.CID, CNAME ORDER BY CUST.CID;
@@ -230,11 +231,11 @@ PNAME             SUM(QTY)
 pencil                  15                                                      
 
 SQL> start query20.sql
-SQL> SELECT CID FROM (SELECT CID, ROW_NUMBER() OVER(ORDER BY SUM(TOTAL_PRICE)) RN FROM PURCHASES GROUP BY CID) SRC WHERE RN BETWEEN 1 AND 2;
+SQL> SELECT C.CNAME, SUM(PC.TOTAL_PRICE) AS TOTAL_SPENDING FROM CUSTOMERS C INNER JOIN PURCHASES PC ON C.CID=PC.CID GROUP BY C.CNAME ORDER BY TOTAL_SPENDING DESC FETCH NEXT 2 ROWS ONLY;
 
-CID                                                                             
-----                                                                            
-c002                                                                            
-c007                                                                            
+CNAME           TOTAL_SPENDING                                                  
+--------------- --------------                                                  
+Chris                   752.68                                                  
+Kathy                   679.35                                                  
 
 SQL> spool off
