@@ -16,12 +16,12 @@ Kathy           666-555-4567 20-FEB-20
 Chris           666-555-6745 18-FEB-20                                          
 
 SQL> start query3.sql
-SQL> SELECT PROD.PID FROM PRODUCTS PROD JOIN PURCHASES PURC ON PROD.PID = PURC.PID JOIN EMPLOYEES EMP ON PURC.EID = EMP.EID AND ORIGINAL_PRICE * (1-discnt_rate) < 10 AND EMP.ENAME = 'Peter';
+SQL> SELECT PROD.PID, PROD.PNAME FROM PRODUCTS PROD JOIN PURCHASES PURC ON PROD.PID = PURC.PID JOIN EMPLOYEES EMP ON PURC.EID = EMP.EID AND ORIGINAL_PRICE * (1-discnt_rate) < 10 AND EMP.ENAME = 'Peter';
 
-PID                                                                             
-----                                                                            
-p005                                                                            
-
+PID   PNAME                                                                             
+----  -----------                                                                            
+p005  chair                                                                          
+                                                                                            
 SQL> start query4.sql
 SQL> SELECT P.* FROM PURCHASES P WHERE P.EID IN (SELECT E.EID FROM EMPLOYEES E INNER JOIN CUSTOMERS C ON SUBSTR(E.TELEPHONE#,1,3)=SUBSTR(C.TELEPHONE#,1,3)) AND P.PID IN (SELECT PID FROM PRODUCTS WHERE (PRODUCTS.PNAME NOT LIKE 'TV'));
 
