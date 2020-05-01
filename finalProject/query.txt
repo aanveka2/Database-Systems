@@ -1,0 +1,108 @@
+use databasecourse;
+
+//Find query to show the lisiting depending on the location of the Lisitng
+db.airbnb_NYC.find({}, { ID: 1, "Name": 1, "Street": 1, "Description": 1, "Accommodates": 1, "Bedrooms": 1, "Amenities": 1, Price: 1, "Number of Reviews": 1, "Review Scores Rating": 1, "Neighbourhood Cleansed": /Gramercy/ })
+
+
+db.airbnb_NYC.find().forEach(function (obj) {
+    obj.Zipcode = NumberInt(obj.Zipcode);
+    db.airbnb_NYC.save(obj);
+});
+
+
+//Range Query for Accomodation Greater than or equal to 2 and Price Range of 50 to 100$
+db.airbnb_NYC.find({ Accommodates: { $gte: 2 }, Price: { $gt: 50, $lt: 100 } });
+
+
+//Aggregate Query to Calculate the Number op people a Host can Accomodate
+db.airbnb_NYC.aggregate(
+    [
+        { $project: { "Name": 1, "Description": 1, required_rooms: { $multiply: ["$Host_Listings_Count", "$Accommodates"] } } }
+    ]
+)
+
+//Aggregate Query to calculate the total value of Lisiting including the Price, Cleaning Fee and Security Deposit
+db.airbnb_NYC.aggregate([{$match: {"ID": "60182"}},
+
+    { "$project": {"ID": 1 ,"Name": 1, "Street": 1,"Bedrooms": 1, "Amenities": 1,"Host Response Rate":1, "Number of Reviews": 1, "Review Scores Rating": 1, "Neighbourhood Cleansed":1,"Final Price": { "$multiply": [1.16, { "$add": ["$Price", "$Cleaning_Fee", "$Security_Deposit"] }] } } }
+])
+
+
+
+//Aggregate Query using th Divide  and Multiply to fidn the Percentage of listing of individual area to total lisitings
+db.getCollection('airbnb_NYC').aggregate(
+    [
+        { $group: { _id: '$Neighbourhood_Cleansed', count: { $sum: 1 } } },
+        { "$project": { "result": { "$multiply": [100, { "$divide": ["$count", 19528] }] } } }
+    ])
+
+//Agregate Query which performs match on basic amenitites by comparing with the Array of Amentities and 
+db.airbnb_NYC.aggregate([
+    {
+        $match: {
+            Amenities: {
+                $in: ["TV",
+                    "Internet",
+                    "Wireless Internet",
+                    "Air conditioning",
+                    "Kitchen",
+                    "Heating",
+                    "Smoke detector",
+                    "Carbon monoxide detector",
+                    "First aid kit",
+                    "Essentials",
+                    "Shampoo"]
+            }
+        }
+    },
+    {
+        $group: {
+            _id: "$ID",
+            Name: { $first: "$Name" },
+            Host_ID: { $first: '$Host ID' },
+            Amenitites: { $first: "$Amenities" },
+            Price: { $first: "$Price" },
+            Amenities: { $first: "Amenities" }
+        }
+    },
+    { $sort: { Price: 1 } }
+])
+
+
+
+
+
+
+//Query Taking Zipcode as input and calculating the nearby zipcode for vicinity locality
+
+db.airbnb_NYC.aggregate([{ $match: { "Zipcode": { $gte: 10009 - 1, $lte: 10009 + 1 } } },
+{
+    $group: {
+        _id: "$ID",
+        Name: { $first: "$Name" },
+        Host_ID: { $first: '$Host ID' },
+        Amenitites: { $first: "$Amenities" },
+        Price: { $first: "$Price" },
+        Amenities: { $first: "$Amenities" },
+        Zipcode: { $first: "$Zipcode" }
+    }
+},
+{ $sort: { Price: 1 } }
+])
+
+
+
+//Query to match the ID of a lisiting to get the type of Room
+db.airbnb_NYC.aggregate([{ $match: { "ID": "893413" } },
+{
+    $group: {
+        ID: "$ID",
+        Name: { $first: "$Name" },
+        Host_ID: { $first: '$Host ID' },
+        Amenitites: { $first: "$Amenities" },
+        Price: { $first: "$Price" },
+        Zipcode: { $first: "$Zipcode" },
+        RoomType:{ $first: "$Room Type" }}},
+        { $sort: { Price: 1 } }
+        
+]) 
